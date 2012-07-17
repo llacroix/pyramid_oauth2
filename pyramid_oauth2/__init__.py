@@ -16,7 +16,7 @@ class Provider(object):
         self.callback = callback
         self.extra = kargs
 
-    def __call__(request, data):
+    def __call__(self, request, data):
         if self.callback:
             self.callback(request, data)
 
