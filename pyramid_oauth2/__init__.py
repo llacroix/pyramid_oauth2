@@ -49,7 +49,7 @@ def authenticate(request):
     else:
         raise NotFound()
 
-def callback(request):
+def view_callback(request):
     provider = get_provider(request)
 
     if not provider:
@@ -80,7 +80,7 @@ def includeme(config):
     config.add_view(authenticate, route_name='oauth_authenticate')
 
     config.add_route('oauth_callback', '/oauth/{provider}/callback')
-    config.add_view(callback, route_name='oauth_callback')
+    config.add_view(view_callback, route_name='oauth_callback')
 
     config.add_directive('add_oauth2_provider', add_oauth2_provider)
 
