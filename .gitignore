@@ -1,0 +1,4 @@
+.tox
+*.pyc
+dist/
+pyramid_oauth2.egg-info/
