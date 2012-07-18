@@ -66,7 +66,6 @@ def get_provider(request):
     else:
         return None
 
-
 def add_oauth2_provider(config, provider):
     config.registry.oauth2_providers[provider.name] = provider
 
