@@ -28,15 +28,16 @@ class Provider(object):
         params = dict()
         params['client_id'] = self.client_id
         params['client_secret'] = self.secret
+        params['redirect_uri'] = request.route_url('oauth_callback', provider=self.name)
         params['code'] = code
 
         return "%s?%s" % (self.access_token_url, urllib.urlencode(params))
 
-    def authenticate_url(self):
+    def authenticate_url(self, request):
         params = dict(**self.extra)
 
         params['client_id'] =  self.client_id
-        params['redirect_uri'] = 'http://vosnax.ru/oauth/' + self.name + '/callback'
+        params['redirect_uri'] = request.route_url('oauth_callback', provider=self.name)
         params['response_type'] = 'code'
 
         return "%s?%s" % (self.authorize_url, urllib.urlencode(params))
@@ -45,7 +46,7 @@ def authenticate(request):
     provider = get_provider(request)
 
     if provider:
-        raise HTTPFound(provider.authenticate_url())
+        raise HTTPFound(provider.authenticate_url(request))
     else:
         raise NotFound()
 
