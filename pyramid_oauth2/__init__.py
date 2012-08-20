@@ -1,9 +1,18 @@
 import urllib
 import urllib2
 
+from pyramid.path import DottedNameResolver
 from pyramid.view import view_config
 from pyramid.exceptions import NotFound
 from pyramid.httpexceptions import HTTPFound
+
+ENABLED_CLIENTS = 'oauth2.clients'
+CLIENT_ID = 'oauth2.%s.client_id'
+SECRET = 'oauth2.%s.secret'
+AUTHORIZE_ENDPOINT = 'oauth2.%s.authorize_endpoint'
+TOKEN_ENDPOINT = 'oauth2.%s.token_endpoint'
+SCOPE = 'oauth2.%s.scope'
+CALLBACK = 'oauth2.%s.callback'
 
 class Provider(object):
 
@@ -70,12 +79,29 @@ def add_oauth2_provider(config, provider):
     config.registry.oauth2_providers[provider.name] = provider
 
 def load_providers(config):
+    resolver = DottedNameResolver()
     config.registry.oauth2_providers = dict()
-    # TODO scan settings and create new providers 
+    settings = config.registry.settings
+
+    clients = config.registry.settings.get(ENABLED_CLIENTS)
+    for client in clients.split(','):
+        scope = settings.get(SCOPE % client)
+        authorize_endpoint = settings.get(AUTHORIZE_ENDPOINT % client)
+        token_endpoint = settings.get(TOKEN_ENDPOINT % client)
+        client_id = settings.get(CLIENT_ID % client)
+        secret = settings.get(SECRET % client)
+        callback = settings.get(CALLBACK % client)
+
+        if callback:
+            callback = resolver.resolve(callback)
+
+        # self,name, client_id, secret, authorize_url, access_token_url, callback=None, **kargs
+        provider = Provider(client, client_id, secret, authorize_endpoint, token_endpoint, callback, scope=scope)
+        config.add_oauth2_provider(provider)
+
+    
 
 def includeme(config):
-    print 'Included pyramid_oauth2'
-
     config.add_route('oauth_authenticate', '/oauth/{provider}/authenticate')
     config.add_view(authenticate, route_name='oauth_authenticate')
 
