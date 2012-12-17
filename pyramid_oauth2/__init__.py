@@ -106,7 +106,8 @@ def view_callback(request):
     if not provider:
         raise NotFound()
 
-    req = urllib2.Request(provider.access_url(request))
+    url, data = provider.access_url(request)
+    req = urllib2.Request(url, data)
 
     data = urllib2.urlopen(req).read()
 
