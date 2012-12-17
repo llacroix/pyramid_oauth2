@@ -66,9 +66,10 @@ class Provider(object):
         params['code'] = code
         params['grant_type'] = 'authorization_code'
 
-        result = "%s?%s" % (self.access_token_url, urllib.urlencode(params))
+        #result = "%s?%s" % (self.access_token_url, urllib.urlencode(params))
+        params = urllib.urlencode(params)
 
-        return result
+        return self.access_token_url, params
 
     def authenticate_url(self, request):
         ''' Returns an url for autentication. It will authenticate you
@@ -105,7 +106,10 @@ def view_callback(request):
     if not provider:
         raise NotFound()
 
-    data = urllib2.urlopen(provider.access_url(request)).read()
+    req = urllib2.Request(provider.access_url(request))
+
+    data = urllib2.urlopen(req).read()
+
     provider(request, data)
 
 def get_provider(request):
