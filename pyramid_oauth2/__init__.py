@@ -1,3 +1,13 @@
+''' 
+Oauth2 pyramid
+==============
+
+Pyramid addons intended to support completely the oauth2 flows.
+
+It currently only supports one of them. It should be possible
+to create a oauth2 provider in the future using this addons.
+'''
+
 import urllib
 import urllib2
 
@@ -15,6 +25,15 @@ SCOPE = 'oauth2.%s.scope'
 CALLBACK = 'oauth2.%s.callback'
 
 class Provider(object):
+    ''' Provider class for when using the client flow.
+        This class has for purpopse to keep all the necessary information
+        to get a token from a provider. 
+
+        The provider is passed to `config.add_view`
+
+        It as a special __call__ method that will get called once 
+        you receive an access_token
+    '''
 
     def __init__(self,name, client_id, secret, authorize_url, access_token_url, callback=None, **kargs):
         self.name = name
@@ -26,40 +45,61 @@ class Provider(object):
         self.extra = kargs
 
     def __call__(self, request, data):
+        ''' Execute the callback method sent to the provider
+        '''
         if self.callback:
             self.callback(request, data)
 
         raise HTTPFound('/')
 
     def access_url(self, request):
+        ''' Returns an url to get the access token using a request
+            code.
+        '''
         code = request.params.get('code')
 
         params = dict()
         params['client_id'] = self.client_id
         params['client_secret'] = self.secret
-        params['redirect_uri'] = request.route_url('oauth_callback', provider=self.name)
+        params['redirect_uri'] = request.route_url('oauth_callback',
+                                                   provider=self.name)
         params['code'] = code
+        params['grant_type'] = 'authorization_code'
 
-        return "%s?%s" % (self.access_token_url, urllib.urlencode(params))
+        result = "%s?%s" % (self.access_token_url, urllib.urlencode(params))
+
+        return result
 
     def authenticate_url(self, request):
+        ''' Returns an url for autentication. It will authenticate you
+            to a provider that will return you a request code
+        '''
         params = dict(**self.extra)
 
         params['client_id'] =  self.client_id
-        params['redirect_uri'] = request.route_url('oauth_callback', provider=self.name)
+        params['redirect_uri'] = request.route_url('oauth_callback',
+                                                   provider=self.name)
         params['response_type'] = 'code'
 
         return "%s?%s" % (self.authorize_url, urllib.urlencode(params))
 
 def authenticate(request):
+    ''' Authenticate view that starts the authentication
+        flow.
+        grant_type [authorization_code]
+    '''
     provider = get_provider(request)
 
     if provider:
+        # If provider is defined
         raise HTTPFound(provider.authenticate_url(request))
     else:
         raise NotFound()
 
 def view_callback(request):
+    ''' Callback view that receives the request code.
+        grant_type [authorization_code]
+    '''
     provider = get_provider(request)
 
     if not provider:
@@ -69,6 +109,8 @@ def view_callback(request):
     provider(request, data)
 
 def get_provider(request):
+    ''' Returns a registered provider if exists
+    '''
     provider = request.matchdict.get('provider')
     if provider:
         return request.registry.oauth2_providers.get(provider)
@@ -76,9 +118,31 @@ def get_provider(request):
         return None
 
 def add_oauth2_provider(config, provider):
+    ''' Adds a provider to the registry in the oauth2_providers
+        namespace.
+    '''
     config.registry.oauth2_providers[provider.name] = provider
 
 def load_providers(config):
+    ''' Loads provider from the config files.
+
+        Each providers should be enabled in 
+        oauth2.clients = ...
+
+        And each config should be defined as such.
+
+        For example:
+        ============
+
+        oauth2.clients = facebook
+        oauth2.facebook.client_id = client_id
+        oauth2.facebook.secret = secret_text
+        oauth2.facebook.authorize_endpoint = authorization url
+        oauth2.facebook.token_endpoint = token url
+        oauth2.facebook.scope = scope you want to use
+        oauth2.facebook.callback = dotted.string.to.callback:func
+
+    '''
     resolver = DottedNameResolver()
     config.registry.oauth2_providers = dict()
     settings = config.registry.settings
@@ -95,13 +159,16 @@ def load_providers(config):
         if callback:
             callback = resolver.resolve(callback)
 
-        # self,name, client_id, secret, authorize_url, access_token_url, callback=None, **kargs
-        provider = Provider(client, client_id, secret, authorize_endpoint, token_endpoint, callback, scope=scope)
+        provider = Provider(client, client_id, secret, 
+                            authorize_endpoint, token_endpoint, 
+                            callback, scope=scope)
         config.add_oauth2_provider(provider)
 
     
 
 def includeme(config):
+    ''' Adds routes and views to pyramid.
+    '''
     config.add_route('oauth_authenticate', '/oauth/{provider}/authenticate')
     config.add_view(authenticate, route_name='oauth_authenticate')
 

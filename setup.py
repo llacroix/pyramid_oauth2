@@ -1,14 +1,19 @@
 from setuptools import setup, find_packages
 
-version = '0.13'
+version = '0.14'
 
-testing_extras = ['nose', 'coverage']
+testing_extras = ['nose', 
+                  'coverage']
 docs_extras = ['Sphinx']
 
 setup(name='pyramid_oauth2',
       version=version,
       description="OAuth2 support for pyramid",
       long_description="""\
+        Pyramid addons intended to support completely the oauth2 flows.
+
+        It currently only supports one of them. It should be possible
+        to create a oauth2 provider in the future using this addons.
       """,
       classifiers=[],
       keywords='oauth2 pyramid',
