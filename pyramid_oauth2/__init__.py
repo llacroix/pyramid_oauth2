@@ -48,7 +48,7 @@ class Provider(object):
         ''' Execute the callback method sent to the provider
         '''
         if self.callback:
-            self.callback(request, data)
+            return self.callback(request, data)
 
         raise HTTPFound('/')
 
