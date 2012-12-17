@@ -70,6 +70,7 @@ class Test_authenticate(TestCase):
 
     def test_with_valid_request(self):
         from pyramid_oauth2 import authenticate
+        from pyramid.exceptions import NotFound
         try:
             authenticate(None)
             success = True
@@ -80,6 +81,7 @@ class Test_authenticate(TestCase):
 
     def test_with_invalid_request(self):
         from pyramid_oauth2 import authenticate
+        from pyramid.exceptions import NotFound
         try:
             authenticate(None)
             success = True
