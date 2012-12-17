@@ -111,7 +111,7 @@ def view_callback(request):
 
     data = urllib2.urlopen(req).read()
 
-    provider(request, data)
+    return provider(request, data)
 
 def get_provider(request):
     ''' Returns a registered provider if exists
